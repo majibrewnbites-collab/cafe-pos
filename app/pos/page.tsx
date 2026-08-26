@@ -1,0 +1,761 @@
+'use client'
+import { useEffect, useState } from 'react'
+import {
+  categories,
+  products,
+  toppings,
+  waffleFlavors,
+  waffleFillings,
+  waffleToppings,
+  waffleSauces,
+} from '@/data/menu'
+import CategoryTabs from '@/components/CategoryTabs'
+import MenuCard from '@/components/MenuCard'
+import Cart from '@/components/Cart'
+import OrderHistory from '@/components/OrderHistory'
+import DailySummary from '@/components/DailySummary'
+import { createOrder, formatOrderNo, type Order, type PayMethod } from '@/lib/orders'
+
+type View = 'menu' | 'history' | 'summary'
+
+export default function POS() {
+  const [selectedCategory, setSelectedCategory] = useState('coffee')
+  const [cart, setCart] = useState<any[]>([])
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [productOptions, setProductOptions] = useState<any>({})
+  const [showCheckout, setShowCheckout] = useState(false)
+  const [view, setView] = useState<View>('menu')
+  const [orders, setOrders] = useState<Order[]>([])
+  const [checkoutStep, setCheckoutStep] = useState<'method' | 'cash' | 'done'>('method')
+  const [payMethod, setPayMethod] = useState<PayMethod>('cash')
+  const [received, setReceived] = useState('')
+  const [lastOrder, setLastOrder] = useState<Order | null>(null)
+
+  useEffect(() => {
+    setOrders(JSON.parse(localStorage.getItem('maji-cafe-orders') || '[]'))
+  }, [])
+
+  const filteredProducts = products.filter((p) => p.category === selectedCategory)
+
+  const calculatePrice = (product: any, options: any) => {
+    let price = product.basePrice
+
+    // ราคาสIZE
+    if (options.size && product.sizes) {
+      price = product.sizes[options.size] || price
+    }
+
+    // วาฟเฟิลกลิ่น
+    if (options.waffleFlavor) {
+      const flavor = waffleFlavors.find((f) => f.id === options.waffleFlavor)
+      if (flavor) price = flavor.price
+    }
+
+    // วาฟเฟิลไส้ (เลือกได้ 1-3 อย่าง)
+    if (options.fillings) {
+      options.fillings.forEach((fid: string) => {
+        const filling = waffleFillings.find((f) => f.id === fid)
+        if (filling) price += filling.price
+      })
+    }
+
+    // วาฟเฟิลท็อปปิ้ง
+    if (options.waffleTopping) {
+      const topping = waffleToppings.find((t) => t.id === options.waffleTopping)
+      if (topping) price += topping.price
+    }
+
+    // วาฟเฟิลซอส
+    if (options.sauces) {
+      options.sauces.forEach((sid: string) => {
+        const sauce = waffleSauces.find((s) => s.id === sid)
+        if (sauce) price += sauce.price
+      })
+    }
+
+    // ท็อปปิ้งเครื่องดื่ม
+    if (options.toppings) {
+      options.toppings.forEach((tid: string) => {
+        const topping = toppings.find((t) => t.id === tid)
+        if (topping) price += topping.price
+      })
+    }
+
+    // เลือกถ้วย +5
+    if (options.addCup) price += 5
+
+    // เลือกรสผลไม้
+    // ราคาคงเดิม
+
+    return price
+  }
+
+  const addToCart = (product: any, options: any) => {
+    const cartItem = {
+      ...product,
+      cartId: Date.now(),
+      quantity: 1,
+      options,
+      finalPrice: calculatePrice(product, options),
+    }
+    setCart([...cart, cartItem])
+    setSelectedProduct(null)
+    setProductOptions({})
+  }
+
+  const removeFromCart = (cartId: number) => {
+    setCart(cart.filter((item) => item.cartId !== cartId))
+  }
+
+  const updateQuantity = (cartId: number, delta: number) => {
+    setCart(
+      cart.map((item) => {
+        if (item.cartId === cartId) {
+          const newQty = item.quantity + delta
+          if (newQty <= 0) return item
+          return { ...item, quantity: newQty }
+        }
+        return item
+      })
+    )
+  }
+
+  const totalAmount = cart.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0)
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
+
+  const receivedNum = Number(received) || 0
+  const changeAmount = receivedNum - totalAmount
+
+  const openCheckout = () => {
+    setCheckoutStep('method')
+    setReceived('')
+    setLastOrder(null)
+    setShowCheckout(true)
+  }
+
+  const completePayment = (method: PayMethod, recv: number | null, change: number | null) => {
+    const order = createOrder({
+      items: cart.map((item) => ({
+        name: item.name,
+        optionsText: getOptionsText(item),
+        price: item.finalPrice,
+        quantity: item.quantity,
+      })),
+      total: totalAmount,
+      method,
+      received: recv,
+      change,
+    })
+    setLastOrder(order)
+    setOrders((prev) => [order, ...prev])
+    setCheckoutStep('done')
+    setTimeout(() => {
+      setCart([])
+      setShowCheckout(false)
+    }, 2500)
+  }
+
+  const pickMethod = (m: PayMethod) => {
+    setPayMethod(m)
+    if (m === 'cash') {
+      setReceived('')
+      setCheckoutStep('cash')
+    } else {
+      completePayment(m, null, null)
+    }
+  }
+
+  const confirmCash = () => {
+    if (receivedNum >= totalAmount && totalAmount > 0) {
+      completePayment('cash', receivedNum, changeAmount)
+    }
+  }
+
+  const getOptionsText = (item: any) => {
+    const parts: string[] = []
+    if (item.options?.size) {
+      const sizeMap: any = { hot: 'ร้อน', cold: 'เย็น', smoothie: 'ปั่น' }
+      parts.push(sizeMap[item.options.size] || item.options.size)
+    }
+    if (item.options?.roast) {
+      parts.push(item.options.roast === 'dark' ? 'Dark' : 'Medium')
+    }
+    if (item.options?.fruitFlavor) {
+      parts.push(item.options.fruitFlavor)
+    }
+    if (item.options?.waffleFlavor) {
+      const f = waffleFlavors.find((x) => x.id === item.options.waffleFlavor)
+      if (f) parts.push(`กลิ่น${f.nameTh}`)
+    }
+    if (item.options?.fillings?.length > 0) {
+      const names = item.options.fillings.map((fid: string) => {
+        const f = waffleFillings.find((x) => x.id === fid)
+        return f?.nameTh || fid
+      })
+      parts.push(`ไส้: ${names.join(', ')}`)
+    }
+    if (item.options?.waffleTopping) {
+      const t = waffleToppings.find((x) => x.id === item.options.waffleTopping)
+      if (t) parts.push(`ท็อปปิ้ง: ${t.nameTh}`)
+    }
+    if (item.options?.sauces?.length > 0) {
+      const names = item.options.sauces.map((sid: string) => {
+        const s = waffleSauces.find((x) => x.id === sid)
+        return s?.nameTh || sid
+      })
+      parts.push(`ซอส: ${names.join(', ')}`)
+    }
+    if (item.options?.toppings?.length > 0) {
+      const names = item.options.toppings.map((tid: string) => {
+        const t = toppings.find((x) => x.id === tid)
+        return t?.nameTh || tid
+      })
+      parts.push(`ท็อปปิ้ง: ${names.join(', ')}`)
+    }
+    if (item.options?.addCup) parts.push('+ ถ้วย')
+    return parts.join(' | ')
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-50 font-sans">
+      {/* ส่วนซ้าย - เมนู */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <div className="bg-white shadow-sm p-4 border-b flex justify-between items-center gap-4">
+          <h1 className="text-2xl font-bold text-green-700 whitespace-nowrap">☕ MAJI CAFE POS</h1>
+          <div className="flex gap-2">
+            {([
+              ['menu', '🧾 หน้าขาย'],
+              ['history', '📋 ประวัติออเดอร์'],
+              ['summary', '📊 สรุปรายวัน'],
+            ] as [View, string][]).map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                  view === v
+                    ? 'bg-green-600 text-white ring-2 ring-green-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {view === 'menu' && (
+          <>
+            <CategoryTabs
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredProducts.map((product) => (
+                  <MenuCard
+                    key={product.id}
+                    product={product}
+                    onSelect={() => {
+                      setSelectedProduct(product)
+                      setProductOptions({})
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {view === 'history' && (
+          <div className="flex-1 overflow-y-auto p-4">
+            <OrderHistory orders={orders} onChange={setOrders} />
+          </div>
+        )}
+
+        {view === 'summary' && (
+          <div className="flex-1 overflow-y-auto p-4">
+            <DailySummary orders={orders} onChange={setOrders} />
+          </div>
+        )}
+      </div>
+
+      {/* ส่วนขวา - ตะกร้า */}
+      {view === 'menu' && (
+        <Cart
+          cart={cart}
+          totalAmount={totalAmount}
+          totalItems={totalItems}
+          onRemove={removeFromCart}
+          onUpdateQuantity={updateQuantity}
+          onCheckout={openCheckout}
+          getOptionsText={getOptionsText}
+        />
+      )}
+
+      {/* Modal เลือกตัวเลือก */}
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <h2 className="text-2xl font-bold mb-1 text-gray-800">
+              {selectedProduct.name}
+            </h2>
+            <p className="text-gray-500 mb-4">{selectedProduct.nameTh}</p>
+
+            {/* เลือกขนาด (เครื่องดื่ม) */}
+            {selectedProduct.sizes && !selectedProduct.isCustomizable && (
+              <div className="mb-4">
+                <h3 className="font-semibold mb-2 text-gray-700">🌡️ เลือกอุณหภูมิ:</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {selectedProduct.sizes.hot && (
+                    <button
+                      onClick={() => setProductOptions({ ...productOptions, size: 'hot' })}
+                      className={`px-4 py-2 rounded-lg border ${
+                        productOptions.size === 'hot'
+                          ? 'bg-red-500 text-white border-red-500'
+                          : 'bg-white text-gray-700 border-gray-300'
+                      }`}
+                    >
+                      🔥 ร้อน ({selectedProduct.sizes.hot}฿)
+                    </button>
+                  )}
+                  {selectedProduct.sizes.cold && (
+                    <button
+                      onClick={() => setProductOptions({ ...productOptions, size: 'cold' })}
+                      className={`px-4 py-2 rounded-lg border ${
+                        productOptions.size === 'cold'
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-white text-gray-700 border-gray-300'
+                      }`}
+                    >
+                      🧊 เย็น ({selectedProduct.sizes.cold}฿)
+                    </button>
+                  )}
+                  {selectedProduct.sizes.smoothie && (
+                    <button
+                      onClick={() => setProductOptions({ ...productOptions, size: 'smoothie' })}
+                      className={`px-4 py-2 rounded-lg border ${
+                        productOptions.size === 'smoothie'
+                          ? 'bg-purple-500 text-white border-purple-500'
+                          : 'bg-white text-gray-700 border-gray-300'
+                      }`}
+                    >
+                       ปั่น ({selectedProduct.sizes.smoothie}฿)
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Dark/Med สำหรับกาแฟ */}
+            {selectedProduct.hasDarkMed && (
+              <div className="mb-4">
+                <h3 className="font-semibold mb-2 text-gray-700">☕ ระดับความเข้ม:</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setProductOptions({ ...productOptions, roast: 'dark' })}
+                    className={`px-4 py-2 rounded-lg border ${
+                      productOptions.roast === 'dark'
+                        ? 'bg-amber-900 text-white border-amber-900'
+                        : 'bg-white text-gray-700 border-gray-300'
+                    }`}
+                  >
+                    Dark
+                  </button>
+                  <button
+                    onClick={() => setProductOptions({ ...productOptions, roast: 'medium' })}
+                    className={`px-4 py-2 rounded-lg border ${
+                      productOptions.roast === 'medium'
+                        ? 'bg-amber-700 text-white border-amber-700'
+                        : 'bg-white text-gray-700 border-gray-300'
+                    }`}
+                  >
+                    Medium
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* เลือกรสผลไม้ */}
+            {selectedProduct.hasFruitFlavors && (
+              <div className="mb-4">
+                <h3 className="font-semibold mb-2 text-gray-700"> เลือกรสผลไม้:</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {selectedProduct.fruitFlavors?.map((flavor: string) => (
+                    <button
+                      key={flavor}
+                      onClick={() => setProductOptions({ ...productOptions, fruitFlavor: flavor })}
+                      className={`px-3 py-2 rounded-lg border text-sm ${
+                        productOptions.fruitFlavor === flavor
+                          ? 'bg-pink-500 text-white border-pink-500'
+                          : 'bg-white text-gray-700 border-gray-300'
+                      }`}
+                    >
+                      {flavor}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ========== วาฟเฟิล ========== */}
+            {selectedProduct.isCustomizable && (
+              <>
+                {/* Step 1: เลือกกลิ่น */}
+                <div className="mb-4">
+                  <h3 className="font-semibold mb-2 text-gray-700">
+                     Step 1: เลือกกลิ่นวาฟเฟิล
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {waffleFlavors.map((flavor) => (
+                      <button
+                        key={flavor.id}
+                        onClick={() =>
+                          setProductOptions({ ...productOptions, waffleFlavor: flavor.id })
+                        }
+                        className={`p-3 rounded-lg border text-sm ${
+                          productOptions.waffleFlavor === flavor.id
+                            ? 'border-green-600 bg-green-50 text-green-800 ring-2 ring-green-300'
+                            : 'border-gray-200 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="font-semibold">{flavor.nameTh}</div>
+                        <div className="text-xs text-gray-500">{flavor.price}฿</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Step 2: เลือกไส้ */}
+                <div className="mb-4">
+                  <h3 className="font-semibold mb-2 text-gray-700">
+                    🥜 Step 2: เลือกไส้ (1-3 อย่าง)
+                    <span className="text-sm font-normal text-gray-500 ml-2">
+                      เลือกแล้ว: {(productOptions.fillings || []).length}/3
+                    </span>
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {waffleFillings.map((filling) => {
+                      const isSelected = (productOptions.fillings || []).includes(filling.id)
+                      return (
+                        <button
+                          key={filling.id}
+                          onClick={() => {
+                            const current = productOptions.fillings || []
+                            if (isSelected) {
+                              setProductOptions({
+                                ...productOptions,
+                                fillings: current.filter((f: string) => f !== filling.id),
+                              })
+                            } else if (current.length < 3) {
+                              setProductOptions({
+                                ...productOptions,
+                                fillings: [...current, filling.id],
+                              })
+                            } else {
+                              alert('เลือกได้สูงสุด 3 อย่างเท่านั้น')
+                            }
+                          }}
+                          className={`p-2 rounded-lg border text-xs ${
+                            isSelected
+                              ? 'border-green-600 bg-green-50 text-green-800 ring-2 ring-green-300'
+                              : 'border-gray-200 hover:border-gray-400'
+                          }`}
+                        >
+                          <div className="font-semibold">{filling.nameTh}</div>
+                          <div className="text-gray-500">+{filling.price}฿</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Step 3: เลือกท็อปปิ้ง */}
+                <div className="mb-4">
+                  <h3 className="font-semibold mb-2 text-gray-700">
+                    🍨 Step 3: เพิ่มท็อปปิ้ง
+                  </h3>
+                  <label className="flex items-center gap-2 mb-2 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <input
+                      type="checkbox"
+                      checked={productOptions.addCup || false}
+                      onChange={(e) =>
+                        setProductOptions({ ...productOptions, addCup: e.target.checked })
+                      }
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">🥤 ยกใส่ถ้วย + Cup (+5฿)</span>
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {waffleToppings.map((topping) => (
+                      <button
+                        key={topping.id}
+                        onClick={() =>
+                          setProductOptions({
+                            ...productOptions,
+                            waffleTopping:
+                              productOptions.waffleTopping === topping.id ? null : topping.id,
+                          })
+                        }
+                        className={`p-2 rounded-lg border text-xs ${
+                          productOptions.waffleTopping === topping.id
+                            ? 'border-green-600 bg-green-50 text-green-800 ring-2 ring-green-300'
+                            : 'border-gray-200 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="font-semibold">{topping.nameTh}</div>
+                        <div className="text-gray-500">+{topping.price}฿</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Step 4: เลือกซอส */}
+                <div className="mb-4">
+                  <h3 className="font-semibold mb-2 text-gray-700">🍫 Step 4: เพิ่มซอส</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {waffleSauces.map((sauce) => {
+                      const isSelected = (productOptions.sauces || []).includes(sauce.id)
+                      return (
+                        <button
+                          key={sauce.id}
+                          onClick={() => {
+                            const current = productOptions.sauces || []
+                            if (isSelected) {
+                              setProductOptions({
+                                ...productOptions,
+                                sauces: current.filter((s: string) => s !== sauce.id),
+                              })
+                            } else {
+                              setProductOptions({
+                                ...productOptions,
+                                sauces: [...current, sauce.id],
+                              })
+                            }
+                          }}
+                          className={`p-2 rounded-lg border text-xs ${
+                            isSelected
+                              ? 'border-green-600 bg-green-50 text-green-800 ring-2 ring-green-300'
+                              : 'border-gray-200 hover:border-gray-400'
+                          }`}
+                        >
+                          <div className="font-semibold">{sauce.nameTh}</div>
+                          <div className="text-gray-500">+{sauce.price}฿</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Toppings สำหรับเครื่องดื่ม */}
+            {!selectedProduct.isCustomizable && (
+              <div className="mb-4">
+                <h3 className="font-semibold mb-2 text-gray-700">🍮 เพิ่มท็อปปิ้ง:</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {toppings.map((topping) => {
+                    const isSelected = (productOptions.toppings || []).includes(topping.id)
+                    return (
+                      <label
+                        key={topping.id}
+                        className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer ${
+                          isSelected
+                            ? 'border-green-600 bg-green-50'
+                            : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {
+                            const current = productOptions.toppings || []
+                            if (isSelected) {
+                              setProductOptions({
+                                ...productOptions,
+                                toppings: current.filter((t: string) => t !== topping.id),
+                              })
+                            } else {
+                              setProductOptions({
+                                ...productOptions,
+                                toppings: [...current, topping.id],
+                              })
+                            }
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span className="flex-1 text-sm">{topping.nameTh}</span>
+                        <span className="text-gray-500 text-sm">+{topping.price}฿</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ปุ่มและราคา */}
+            <div className="border-t pt-4 mt-4 flex justify-between items-center sticky bottom-0 bg-white">
+              <div>
+                <span className="text-sm text-gray-500">รวม:</span>
+                <div className="text-3xl font-bold text-green-600">
+                  {calculatePrice(selectedProduct, productOptions)}฿
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedProduct(null)
+                    setProductOptions({})
+                  }}
+                  className="px-6 py-3 bg-gray-200 rounded-xl font-semibold hover:bg-gray-300"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={() => addToCart(selectedProduct, productOptions)}
+                  className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 shadow-lg shadow-green-200"
+                >
+                  ➕ เพิ่มในตะกร้า
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal ชำระเงิน */}
+      {showCheckout && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            {checkoutStep === 'done' && lastOrder ? (
+              <div className="text-center py-6">
+                <p className="text-6xl mb-4">✅</p>
+                <p className="text-gray-500 mb-1">ชำระเงินสำเร็จ — ออเดอร์</p>
+                <p className="text-5xl font-bold text-green-600 mb-4">
+                  {formatOrderNo(lastOrder.orderNo)}
+                </p>
+                <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">ยอดรวม</span>
+                    <span className="font-bold">{lastOrder.total}฿</span>
+                  </div>
+                  {lastOrder.method === 'cash' && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">💵 ลูกค้าจ่ายมา</span>
+                        <span className="font-bold">{lastOrder.received}฿</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">💰 ต้องทอน</span>
+                        <span className="font-bold text-green-700 text-lg">{lastOrder.change}฿</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : checkoutStep === 'cash' ? (
+              <>
+                <h2 className="text-xl font-bold mb-4 text-gray-800">💵 เงินสด</h2>
+                <div className="bg-gray-50 rounded-lg p-4 mb-3 flex justify-between items-center">
+                  <span>ยอดที่ต้องชำระ:</span>
+                  <span className="font-bold text-green-600 text-2xl">{totalAmount}฿</span>
+                </div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  ลูกค้าจ่ายมา (บาท)
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={received}
+                  onChange={(e) => setReceived(e.target.value)}
+                  placeholder="0"
+                  autoFocus
+                  className="w-full text-3xl font-bold text-right border rounded-lg px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {[totalAmount, 50, 100, 200, 500, 1000].map((v, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setReceived(String(v))}
+                      className="py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
+                    >
+                      {i === 0 ? 'พอดี' : `${v}฿`}
+                    </button>
+                  ))}
+                </div>
+                {receivedNum > 0 && (
+                  <div className={`rounded-lg p-3 mb-4 ${changeAmount >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-gray-700">
+                        {changeAmount >= 0 ? '💰 ต้องทอน' : 'ยังขาดอีก'}
+                      </span>
+                      <span className={`text-3xl font-bold ${changeAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {Math.abs(changeAmount)}฿
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCheckoutStep('method')}
+                    className="px-4 py-3 bg-gray-200 rounded-xl font-semibold hover:bg-gray-300"
+                  >
+                    ย้อนกลับ
+                  </button>
+                  <button
+                    onClick={confirmCash}
+                    disabled={receivedNum < totalAmount}
+                    className="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    ✓ ยืนยันรับเงิน
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">💳 ชำระเงิน</h2>
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="flex justify-between mb-2">
+                    <span>จำนวนรายการ:</span>
+                    <span className="font-bold">{totalItems} รายการ</span>
+                  </div>
+                  <div className="flex justify-between text-xl">
+                    <span className="font-semibold">ยอดรวม:</span>
+                    <span className="font-bold text-green-600 text-2xl">{totalAmount}฿</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => pickMethod('cash')}
+                    className="w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700"
+                  >
+                    💵 เงินสด
+                  </button>
+                  <button
+                    onClick={() => pickMethod('qr')}
+                    className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700"
+                  >
+                    📱 QR PromptPay
+                  </button>
+                  <button
+                    onClick={() => pickMethod('credit')}
+                    className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700"
+                  >
+                    💳 บัตรเครดิต
+                  </button>
+                  <button
+                    onClick={() => setShowCheckout(false)}
+                    className="w-full py-3 bg-gray-200 rounded-xl font-semibold hover:bg-gray-300"
+                  >
+                    ยกเลิก
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
