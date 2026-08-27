@@ -217,15 +217,23 @@ export default function POS() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans">
+    <div className="flex h-screen bg-cafe-50 font-sans">
       {/* ส่วนซ้าย - เมนู */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <div className="bg-white shadow-sm p-4 border-b flex justify-between items-center gap-4">
-          <h1 className="text-2xl font-bold text-green-700 whitespace-nowrap">☕ MAJI CAFE POS</h1>
+        <div className="bg-white shadow-sm p-4 border-b border-cafe-200 flex justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-cafe-700 rounded-xl flex items-center justify-center">
+              <span className="text-xl">☕</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-cafe-900 whitespace-nowrap">MAJI CAFE</h1>
+              <p className="text-xs text-cafe-500">MARU WAFFLE AT HAYDAY</p>
+            </div>
+          </div>
           <div className="flex gap-2">
             {([
               ['menu', '🧾 หน้าขาย'],
-              ['history', '📋 ประวัติออเดอร์'],
+              ['history', '📋 ประวัติ'],
               ['summary', '📊 สรุปรายวัน'],
             ] as [View, string][]).map(([v, label]) => (
               <button
@@ -233,8 +241,8 @@ export default function POS() {
                 onClick={() => setView(v)}
                 className={`px-4 py-2 rounded-lg font-semibold text-sm ${
                   view === v
-                    ? 'bg-green-600 text-white ring-2 ring-green-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-cafe-700 text-white shadow-md shadow-cafe-200'
+                    : 'bg-cafe-50 text-cafe-600 hover:bg-cafe-100 border border-cafe-200'
                 }`}
               >
                 {label}
@@ -296,25 +304,25 @@ export default function POS() {
 
       {/* Modal เลือกตัวเลือก */}
       {selectedProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <h2 className="text-2xl font-bold mb-1 text-gray-800">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-cafe-200">
+            <h2 className="text-2xl font-bold mb-1 text-cafe-900">
               {selectedProduct.name}
             </h2>
-            <p className="text-gray-500 mb-4">{selectedProduct.nameTh}</p>
+            <p className="text-cafe-500 mb-5">{selectedProduct.nameTh}</p>
 
             {/* เลือกขนาด (เครื่องดื่ม) */}
             {selectedProduct.sizes && !selectedProduct.isCustomizable && (
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2 text-gray-700">🌡️ เลือกอุณหภูมิ:</h3>
+              <div className="mb-5">
+                <h3 className="font-semibold mb-2 text-cafe-700">🌡️ เลือกอุณหภูมิ:</h3>
                 <div className="flex gap-2 flex-wrap">
                   {selectedProduct.sizes.hot && (
                     <button
                       onClick={() => setProductOptions({ ...productOptions, size: 'hot' })}
-                      className={`px-4 py-2 rounded-lg border ${
+                      className={`px-4 py-2 rounded-lg border font-medium ${
                         productOptions.size === 'hot'
                           ? 'bg-red-500 text-white border-red-500'
-                          : 'bg-white text-gray-700 border-gray-300'
+                          : 'bg-white text-cafe-700 border-cafe-200 hover:border-cafe-400'
                       }`}
                     >
                       🔥 ร้อน ({selectedProduct.sizes.hot}฿)
@@ -323,10 +331,10 @@ export default function POS() {
                   {selectedProduct.sizes.cold && (
                     <button
                       onClick={() => setProductOptions({ ...productOptions, size: 'cold' })}
-                      className={`px-4 py-2 rounded-lg border ${
+                      className={`px-4 py-2 rounded-lg border font-medium ${
                         productOptions.size === 'cold'
                           ? 'bg-blue-500 text-white border-blue-500'
-                          : 'bg-white text-gray-700 border-gray-300'
+                          : 'bg-white text-cafe-700 border-cafe-200 hover:border-cafe-400'
                       }`}
                     >
                       🧊 เย็น ({selectedProduct.sizes.cold}฿)
@@ -335,10 +343,10 @@ export default function POS() {
                   {selectedProduct.sizes.smoothie && (
                     <button
                       onClick={() => setProductOptions({ ...productOptions, size: 'smoothie' })}
-                      className={`px-4 py-2 rounded-lg border ${
+                      className={`px-4 py-2 rounded-lg border font-medium ${
                         productOptions.size === 'smoothie'
                           ? 'bg-purple-500 text-white border-purple-500'
-                          : 'bg-white text-gray-700 border-gray-300'
+                          : 'bg-white text-cafe-700 border-cafe-200 hover:border-cafe-400'
                       }`}
                     >
                        ปั่น ({selectedProduct.sizes.smoothie}฿)
@@ -350,25 +358,25 @@ export default function POS() {
 
             {/* Dark/Med สำหรับกาแฟ */}
             {selectedProduct.hasDarkMed && (
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2 text-gray-700">☕ ระดับความเข้ม:</h3>
+              <div className="mb-5">
+                <h3 className="font-semibold mb-2 text-cafe-700">☕ ระดับความเข้ม:</h3>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setProductOptions({ ...productOptions, roast: 'dark' })}
-                    className={`px-4 py-2 rounded-lg border ${
+                    className={`px-4 py-2 rounded-lg border font-medium ${
                       productOptions.roast === 'dark'
                         ? 'bg-amber-900 text-white border-amber-900'
-                        : 'bg-white text-gray-700 border-gray-300'
+                        : 'bg-white text-cafe-700 border-cafe-200 hover:border-cafe-400'
                     }`}
                   >
                     Dark
                   </button>
                   <button
                     onClick={() => setProductOptions({ ...productOptions, roast: 'medium' })}
-                    className={`px-4 py-2 rounded-lg border ${
+                    className={`px-4 py-2 rounded-lg border font-medium ${
                       productOptions.roast === 'medium'
                         ? 'bg-amber-700 text-white border-amber-700'
-                        : 'bg-white text-gray-700 border-gray-300'
+                        : 'bg-white text-cafe-700 border-cafe-200 hover:border-cafe-400'
                     }`}
                   >
                     Medium
@@ -379,17 +387,17 @@ export default function POS() {
 
             {/* เลือกรสผลไม้ */}
             {selectedProduct.hasFruitFlavors && (
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2 text-gray-700"> เลือกรสผลไม้:</h3>
+              <div className="mb-5">
+                <h3 className="font-semibold mb-2 text-cafe-700"> เลือกรสผลไม้:</h3>
                 <div className="flex gap-2 flex-wrap">
                   {selectedProduct.fruitFlavors?.map((flavor: string) => (
                     <button
                       key={flavor}
                       onClick={() => setProductOptions({ ...productOptions, fruitFlavor: flavor })}
-                      className={`px-3 py-2 rounded-lg border text-sm ${
+                      className={`px-3 py-2 rounded-lg border text-sm font-medium ${
                         productOptions.fruitFlavor === flavor
                           ? 'bg-pink-500 text-white border-pink-500'
-                          : 'bg-white text-gray-700 border-gray-300'
+                          : 'bg-white text-cafe-700 border-cafe-200 hover:border-cafe-400'
                       }`}
                     >
                       {flavor}
@@ -403,8 +411,8 @@ export default function POS() {
             {selectedProduct.isCustomizable && (
               <>
                 {/* Step 1: เลือกกลิ่น */}
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2 text-gray-700">
+                <div className="mb-5">
+                  <h3 className="font-semibold mb-2 text-cafe-700">
                      Step 1: เลือกกลิ่นวาฟเฟิล
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -416,22 +424,22 @@ export default function POS() {
                         }
                         className={`p-3 rounded-lg border text-sm ${
                           productOptions.waffleFlavor === flavor.id
-                            ? 'border-green-600 bg-green-50 text-green-800 ring-2 ring-green-300'
-                            : 'border-gray-200 hover:border-gray-400'
+                            ? 'border-cafe-600 bg-cafe-100 text-cafe-800 ring-2 ring-cafe-300'
+                            : 'border-cafe-200 hover:border-cafe-400 text-cafe-700'
                         }`}
                       >
                         <div className="font-semibold">{flavor.nameTh}</div>
-                        <div className="text-xs text-gray-500">{flavor.price}฿</div>
+                        <div className="text-xs text-cafe-500">{flavor.price}฿</div>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* Step 2: เลือกไส้ */}
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2 text-gray-700">
+                <div className="mb-5">
+                  <h3 className="font-semibold mb-2 text-cafe-700">
                     🥜 Step 2: เลือกไส้ (1-3 อย่าง)
-                    <span className="text-sm font-normal text-gray-500 ml-2">
+                    <span className="text-sm font-normal text-cafe-500 ml-2">
                       เลือกแล้ว: {(productOptions.fillings || []).length}/3
                     </span>
                   </h3>
@@ -459,12 +467,12 @@ export default function POS() {
                           }}
                           className={`p-2 rounded-lg border text-xs ${
                             isSelected
-                              ? 'border-green-600 bg-green-50 text-green-800 ring-2 ring-green-300'
-                              : 'border-gray-200 hover:border-gray-400'
+                              ? 'border-cafe-600 bg-cafe-100 text-cafe-800 ring-2 ring-cafe-300'
+                              : 'border-cafe-200 hover:border-cafe-400 text-cafe-700'
                           }`}
                         >
                           <div className="font-semibold">{filling.nameTh}</div>
-                          <div className="text-gray-500">+{filling.price}฿</div>
+                          <div className="text-cafe-500">+{filling.price}฿</div>
                         </button>
                       )
                     })}
@@ -472,20 +480,20 @@ export default function POS() {
                 </div>
 
                 {/* Step 3: เลือกท็อปปิ้ง */}
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2 text-gray-700">
+                <div className="mb-5">
+                  <h3 className="font-semibold mb-2 text-cafe-700">
                     🍨 Step 3: เพิ่มท็อปปิ้ง
                   </h3>
-                  <label className="flex items-center gap-2 mb-2 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <label className="flex items-center gap-2 mb-3 p-3 bg-cafe-50 rounded-lg border border-cafe-200 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={productOptions.addCup || false}
                       onChange={(e) =>
                         setProductOptions({ ...productOptions, addCup: e.target.checked })
                       }
-                      className="w-4 h-4"
+                      className="w-4 h-4 accent-cafe-600"
                     />
-                    <span className="text-sm">🥤 ยกใส่ถ้วย + Cup (+5฿)</span>
+                    <span className="text-sm font-medium text-cafe-700">🥤 ยกใส่ถ้วย + Cup (+5฿)</span>
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {waffleToppings.map((topping) => (
@@ -500,20 +508,20 @@ export default function POS() {
                         }
                         className={`p-2 rounded-lg border text-xs ${
                           productOptions.waffleTopping === topping.id
-                            ? 'border-green-600 bg-green-50 text-green-800 ring-2 ring-green-300'
-                            : 'border-gray-200 hover:border-gray-400'
+                            ? 'border-cafe-600 bg-cafe-100 text-cafe-800 ring-2 ring-cafe-300'
+                            : 'border-cafe-200 hover:border-cafe-400 text-cafe-700'
                         }`}
                       >
                         <div className="font-semibold">{topping.nameTh}</div>
-                        <div className="text-gray-500">+{topping.price}฿</div>
+                        <div className="text-cafe-500">+{topping.price}฿</div>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* Step 4: เลือกซอส */}
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2 text-gray-700">🍫 Step 4: เพิ่มซอส</h3>
+                <div className="mb-5">
+                  <h3 className="font-semibold mb-2 text-cafe-700">🍫 Step 4: เพิ่มซอส</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {waffleSauces.map((sauce) => {
                       const isSelected = (productOptions.sauces || []).includes(sauce.id)
@@ -536,12 +544,12 @@ export default function POS() {
                           }}
                           className={`p-2 rounded-lg border text-xs ${
                             isSelected
-                              ? 'border-green-600 bg-green-50 text-green-800 ring-2 ring-green-300'
-                              : 'border-gray-200 hover:border-gray-400'
+                              ? 'border-cafe-600 bg-cafe-100 text-cafe-800 ring-2 ring-cafe-300'
+                              : 'border-cafe-200 hover:border-cafe-400 text-cafe-700'
                           }`}
                         >
                           <div className="font-semibold">{sauce.nameTh}</div>
-                          <div className="text-gray-500">+{sauce.price}฿</div>
+                          <div className="text-cafe-500">+{sauce.price}฿</div>
                         </button>
                       )
                     })}
@@ -552,18 +560,18 @@ export default function POS() {
 
             {/* Toppings สำหรับเครื่องดื่ม */}
             {!selectedProduct.isCustomizable && (
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2 text-gray-700">🍮 เพิ่มท็อปปิ้ง:</h3>
+              <div className="mb-5">
+                <h3 className="font-semibold mb-2 text-cafe-700">🍮 เพิ่มท็อปปิ้ง:</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {toppings.map((topping) => {
                     const isSelected = (productOptions.toppings || []).includes(topping.id)
                     return (
                       <label
                         key={topping.id}
-                        className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer ${
+                        className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer ${
                           isSelected
-                            ? 'border-green-600 bg-green-50'
-                            : 'border-gray-200 hover:bg-gray-50'
+                            ? 'border-cafe-600 bg-cafe-50'
+                            : 'border-cafe-200 hover:bg-cafe-50'
                         }`}
                       >
                         <input
@@ -583,10 +591,10 @@ export default function POS() {
                               })
                             }
                           }}
-                          className="w-4 h-4"
+                          className="w-4 h-4 accent-cafe-600"
                         />
-                        <span className="flex-1 text-sm">{topping.nameTh}</span>
-                        <span className="text-gray-500 text-sm">+{topping.price}฿</span>
+                        <span className="flex-1 text-sm font-medium text-cafe-700">{topping.nameTh}</span>
+                        <span className="text-cafe-500 text-sm">+{topping.price}฿</span>
                       </label>
                     )
                   })}
@@ -595,10 +603,10 @@ export default function POS() {
             )}
 
             {/* ปุ่มและราคา */}
-            <div className="border-t pt-4 mt-4 flex justify-between items-center sticky bottom-0 bg-white">
+            <div className="border-t border-cafe-200 pt-4 mt-4 flex justify-between items-center sticky bottom-0 bg-white">
               <div>
-                <span className="text-sm text-gray-500">รวม:</span>
-                <div className="text-3xl font-bold text-green-600">
+                <span className="text-sm text-cafe-500">รวม:</span>
+                <div className="text-3xl font-bold text-cafe-700">
                   {calculatePrice(selectedProduct, productOptions)}฿
                 </div>
               </div>
@@ -608,13 +616,13 @@ export default function POS() {
                     setSelectedProduct(null)
                     setProductOptions({})
                   }}
-                  className="px-6 py-3 bg-gray-200 rounded-xl font-semibold hover:bg-gray-300"
+                  className="px-6 py-3 bg-cafe-100 text-cafe-600 rounded-xl font-semibold hover:bg-cafe-200 border border-cafe-200"
                 >
                   ยกเลิก
                 </button>
                 <button
                   onClick={() => addToCart(selectedProduct, productOptions)}
-                  className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 shadow-lg shadow-green-200"
+                  className="px-6 py-3 bg-cafe-700 text-white rounded-xl font-semibold hover:bg-cafe-800 shadow-lg shadow-cafe-200"
                 >
                   ➕ เพิ่มในตะกร้า
                 </button>
@@ -626,29 +634,31 @@ export default function POS() {
 
       {/* Modal ชำระเงิน */}
       {showCheckout && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-cafe-200">
             {checkoutStep === 'done' && lastOrder ? (
               <div className="text-center py-6">
-                <p className="text-6xl mb-4">✅</p>
-                <p className="text-gray-500 mb-1">ชำระเงินสำเร็จ — ออเดอร์</p>
-                <p className="text-5xl font-bold text-green-600 mb-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">✓</span>
+                </div>
+                <p className="text-cafe-500 mb-1">ชำระเงินสำเร็จ — ออเดอร์</p>
+                <p className="text-4xl font-bold text-cafe-800 mb-4">
                   {formatOrderNo(lastOrder.orderNo)}
                 </p>
-                <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
+                <div className="bg-cafe-50 rounded-xl p-4 text-sm space-y-2 border border-cafe-100">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">ยอดรวม</span>
-                    <span className="font-bold">{lastOrder.total}฿</span>
+                    <span className="text-cafe-500">ยอดรวม</span>
+                    <span className="font-bold text-cafe-800">{lastOrder.total}฿</span>
                   </div>
                   {lastOrder.method === 'cash' && (
                     <>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">💵 ลูกค้าจ่ายมา</span>
-                        <span className="font-bold">{lastOrder.received}฿</span>
+                        <span className="text-cafe-500">💵 ลูกค้าจ่ายมา</span>
+                        <span className="font-bold text-cafe-800">{lastOrder.received}฿</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">💰 ต้องทอน</span>
-                        <span className="font-bold text-green-700 text-lg">{lastOrder.change}฿</span>
+                      <div className="flex justify-between border-t border-cafe-200 pt-2">
+                        <span className="text-cafe-500">💰 ต้องทอน</span>
+                        <span className="font-bold text-green-600 text-lg">{lastOrder.change}฿</span>
                       </div>
                     </>
                   )}
@@ -656,12 +666,12 @@ export default function POS() {
               </div>
             ) : checkoutStep === 'cash' ? (
               <>
-                <h2 className="text-xl font-bold mb-4 text-gray-800">💵 เงินสด</h2>
-                <div className="bg-gray-50 rounded-lg p-4 mb-3 flex justify-between items-center">
-                  <span>ยอดที่ต้องชำระ:</span>
-                  <span className="font-bold text-green-600 text-2xl">{totalAmount}฿</span>
+                <h2 className="text-xl font-bold mb-4 text-cafe-900">💵 เงินสด</h2>
+                <div className="bg-cafe-50 rounded-xl p-4 mb-4 flex justify-between items-center border border-cafe-100">
+                  <span className="text-cafe-600">ยอดที่ต้องชำระ:</span>
+                  <span className="font-bold text-cafe-700 text-2xl">{totalAmount}฿</span>
                 </div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-cafe-700 mb-1">
                   ลูกค้าจ่ายมา (บาท)
                 </label>
                 <input
@@ -671,23 +681,27 @@ export default function POS() {
                   onChange={(e) => setReceived(e.target.value)}
                   placeholder="0"
                   autoFocus
-                  className="w-full text-3xl font-bold text-right border rounded-lg px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full text-3xl font-bold text-right border border-cafe-200 rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-cafe-500 focus:border-cafe-500"
                 />
-                <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="grid grid-cols-3 gap-2 mb-4">
                   {[totalAmount, 50, 100, 200, 500, 1000].map((v, i) => (
                     <button
                       key={i}
                       onClick={() => setReceived(String(v))}
-                      className="py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
+                      className="py-2.5 rounded-lg bg-cafe-50 text-cafe-700 font-semibold hover:bg-cafe-100 border border-cafe-200 transition-colors"
                     >
                       {i === 0 ? 'พอดี' : `${v}฿`}
                     </button>
                   ))}
                 </div>
                 {receivedNum > 0 && (
-                  <div className={`rounded-lg p-3 mb-4 ${changeAmount >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <div className={`rounded-xl p-4 mb-4 border ${
+                    changeAmount >= 0 
+                      ? 'bg-green-50 border-green-200' 
+                      : 'bg-red-50 border-red-200'
+                  }`}>
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-gray-700">
+                      <span className="font-semibold text-cafe-700">
                         {changeAmount >= 0 ? '💰 ต้องทอน' : 'ยังขาดอีก'}
                       </span>
                       <span className={`text-3xl font-bold ${changeAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -699,14 +713,14 @@ export default function POS() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setCheckoutStep('method')}
-                    className="px-4 py-3 bg-gray-200 rounded-xl font-semibold hover:bg-gray-300"
+                    className="px-4 py-3 bg-cafe-100 text-cafe-600 rounded-xl font-semibold hover:bg-cafe-200 border border-cafe-200"
                   >
                     ย้อนกลับ
                   </button>
                   <button
                     onClick={confirmCash}
                     disabled={receivedNum < totalAmount}
-                    className="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="flex-1 py-3 bg-cafe-700 text-white rounded-xl font-bold hover:bg-cafe-800 disabled:bg-cafe-200 disabled:text-cafe-400 disabled:cursor-not-allowed transition-all"
                   >
                     ✓ ยืนยันรับเงิน
                   </button>
@@ -714,39 +728,39 @@ export default function POS() {
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">💳 ชำระเงิน</h2>
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <h2 className="text-2xl font-bold mb-4 text-cafe-900">💳 ชำระเงิน</h2>
+                <div className="bg-cafe-50 rounded-xl p-4 mb-4 border border-cafe-100">
                   <div className="flex justify-between mb-2">
-                    <span>จำนวนรายการ:</span>
-                    <span className="font-bold">{totalItems} รายการ</span>
+                    <span className="text-cafe-600">จำนวนรายการ:</span>
+                    <span className="font-bold text-cafe-800">{totalItems} รายการ</span>
                   </div>
                   <div className="flex justify-between text-xl">
-                    <span className="font-semibold">ยอดรวม:</span>
-                    <span className="font-bold text-green-600 text-2xl">{totalAmount}฿</span>
+                    <span className="font-semibold text-cafe-600">ยอดรวม:</span>
+                    <span className="font-bold text-cafe-700 text-2xl">{totalAmount}฿</span>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <button
                     onClick={() => pickMethod('cash')}
-                    className="w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700"
+                    className="w-full py-3.5 bg-cafe-700 text-white rounded-xl font-bold hover:bg-cafe-800 transition-colors"
                   >
                     💵 เงินสด
                   </button>
                   <button
                     onClick={() => pickMethod('qr')}
-                    className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700"
+                    className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
                   >
                     📱 QR PromptPay
                   </button>
                   <button
                     onClick={() => pickMethod('credit')}
-                    className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700"
+                    className="w-full py-3.5 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors"
                   >
                     💳 บัตรเครดิต
                   </button>
                   <button
                     onClick={() => setShowCheckout(false)}
-                    className="w-full py-3 bg-gray-200 rounded-xl font-semibold hover:bg-gray-300"
+                    className="w-full py-3 bg-cafe-100 text-cafe-600 rounded-xl font-semibold hover:bg-cafe-200 border border-cafe-200 transition-colors"
                   >
                     ยกเลิก
                   </button>

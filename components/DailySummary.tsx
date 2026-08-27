@@ -62,37 +62,44 @@ export default function DailySummary({ orders, onChange }: { orders: Order[]; on
 
   if (groups.length === 0) {
     return (
-      <div className="text-center text-gray-400 mt-20">
-        <p className="text-6xl mb-3">📊</p>
-        <p>ยังไม่มีข้อมูลการขาย</p>
+      <div className="text-center text-cafe-400 mt-20">
+        <p className="text-6xl mb-3 opacity-50">📊</p>
+        <p className="font-medium">ยังไม่มีข้อมูลการขาย</p>
+        <p className="text-sm mt-2 text-cafe-300">เริ่มขายเพื่อดูสรุปรายวันที่นี่</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">📊 สรุปยอดขายรายวัน</h2>
+    <div className="max-w-3xl mx-auto space-y-5">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-cafe-900">สรุปยอดขายรายวัน</h2>
+          <p className="text-sm text-cafe-500 mt-1">{groups.length} วันที่มียอดขาย</p>
+        </div>
         <button
           onClick={handleClearAll}
-          className="text-sm px-3 py-2 rounded-lg bg-red-50 text-red-600 font-semibold hover:bg-red-100"
+          className="text-sm px-4 py-2 rounded-lg bg-red-50 text-red-600 font-semibold hover:bg-red-100 border border-red-200"
         >
           🗑️ ล้างทั้งหมด
         </button>
       </div>
       {groups.map((g) => (
-        <div key={g.dateKey} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="bg-green-600 text-white p-4">
+        <div key={g.dateKey} className="bg-white rounded-xl border border-cafe-200 overflow-hidden shadow-sm">
+          <div className="bg-cafe-700 text-white p-5">
             <div className="flex justify-between items-center gap-2">
               <div>
-                <h3 className="font-bold capitalize">{g.label}</h3>
-                <p className="text-sm opacity-90">{g.orders.length} ออเดอร์</p>
+                <h3 className="font-bold text-lg capitalize">{g.label}</h3>
+                <p className="text-cafe-200 text-sm mt-1">{g.orders.length} ออเดอร์</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold">{g.total}฿</span>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-cafe-200 text-xs">ยอดรวม</p>
+                  <span className="text-2xl font-bold">{g.total}฿</span>
+                </div>
                 <button
                   onClick={() => handleClearDay(g)}
-                  className="text-sm px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 font-semibold"
+                  className="text-sm px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                   title="ลบออเดอร์ของวันนี้"
                 >
                   🗑️
@@ -100,18 +107,18 @@ export default function DailySummary({ orders, onChange }: { orders: Order[]; on
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-100">
+          <div className="grid grid-cols-3 divide-x divide-cafe-100">
             <div className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1">💵 เงินสด ({g.cashCount})</p>
-              <p className="font-bold text-green-700 text-lg">{g.cashTotal}฿</p>
+              <p className="text-xs text-cafe-500 mb-1 font-medium">💵 เงินสด ({g.cashCount})</p>
+              <p className="font-bold text-green-600 text-lg">{g.cashTotal}฿</p>
             </div>
             <div className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1">📱 QR ({g.qrCount})</p>
-              <p className="font-bold text-blue-700 text-lg">{g.qrTotal}฿</p>
+              <p className="text-xs text-cafe-500 mb-1 font-medium">📱 QR ({g.qrCount})</p>
+              <p className="font-bold text-blue-600 text-lg">{g.qrTotal}฿</p>
             </div>
             <div className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1">💳 บัตร ({g.creditCount})</p>
-              <p className="font-bold text-purple-700 text-lg">{g.creditTotal}฿</p>
+              <p className="text-xs text-cafe-500 mb-1 font-medium">💳 บัตร ({g.creditCount})</p>
+              <p className="font-bold text-purple-600 text-lg">{g.creditTotal}฿</p>
             </div>
           </div>
         </div>
