@@ -226,7 +226,7 @@ export default function POS() {
               <span className="text-xl">☕</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-cafe-900 whitespace-nowrap">MAJI CAFE</h1>
+              <h1 className="text-xl font-bold text-cafe-900 whitespace-nowrap">MAJI CAFE &</h1>
               <p className="text-xs text-cafe-500">MARU WAFFLE AT HAYDAY</p>
             </div>
           </div>
