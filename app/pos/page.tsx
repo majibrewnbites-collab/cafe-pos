@@ -227,7 +227,7 @@ export default function POS() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-cafe-900 whitespace-nowrap">MAJI CAFE &</h1>
-              <p className="text-xs text-cafe-500">MARU WAFFLE AT HAYDAY</p>
+              <h1 className="text-xl font-bold text-cafe-900 whitespace-nowrap">MARU WAFFLE AT HAYDAY</h1>
             </div>
           </div>
           <div className="flex gap-2">
